@@ -1,0 +1,12 @@
+.venv/
+.pytest_cache/
+*.egg-info/
+__pycache__/
+*.pyc
+.DS_Store
+models/*.task
+!models/.gitkeep
+runs/*
+!runs/.gitkeep
+samples/*
+!samples/.gitkeep

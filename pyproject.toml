@@ -1,0 +1,30 @@
+[project]
+name = "second-take-audit-engine"
+version = "0.1.0"
+description = "AGAPE transcript-free synchronized audio and movement coaching engine"
+requires-python = ">=3.11"
+dependencies = [
+  "jinja2>=3.1",
+  "librosa>=0.11",
+  "matplotlib>=3.10",
+  "mediapipe==1.0.0",
+  "numpy>=2.2,<2.4",
+  "opencv-contrib-python>=5.0",
+  "scipy>=1.16",
+  "soundfile>=0.13",
+  "yt-dlp[default]>=2026.7.4",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+agape = "audit_engine.cli:main"
+second-take-audit = "audit_engine.cli:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["audit_engine*"]
