@@ -23,6 +23,13 @@ def run(command: list[str], *, capture: bool = True) -> subprocess.CompletedProc
     )
 
 
+def yt_dlp_runtime_args() -> list[str]:
+    if shutil.which("deno"):
+        return []
+    node = shutil.which("node")
+    return ["--js-runtimes", f"node:{node}"] if node else []
+
+
 def fetch_source(
     source: str,
     paths: JobPaths,
@@ -47,6 +54,7 @@ def fetch_source(
     output_template = str(paths.root / "download.%(ext)s")
     command = [
         yt_dlp,
+        *yt_dlp_runtime_args(),
         "--no-playlist",
         "--max-filesize",
         str(config.max_input_bytes),

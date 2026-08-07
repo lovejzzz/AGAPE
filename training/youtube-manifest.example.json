@@ -1,0 +1,28 @@
+{
+  "kind": "agape_youtube_training_manifest",
+  "schema_version": 1,
+  "reuse_attestation": {
+    "confirmed": false,
+    "confirmed_by": "",
+    "confirmed_at": "",
+    "notes": "Review reuse rights, privacy, attribution, selected items, and speaker/session groups before confirming."
+  },
+  "items": [
+    {
+      "selected": true,
+      "url": "https://www.youtube.com/watch?v=abcdefghijk",
+      "video_id": "abcdefghijk",
+      "group": "speaker-or-session-01",
+      "title": "Replace with the current YouTube title",
+      "channel": "Replace with the creator or channel",
+      "channel_id": "replace-with-channel-id",
+      "segment_start_seconds": 15,
+      "segment_seconds": 90,
+      "context": "stage",
+      "rights_basis": "creative_commons",
+      "detected_license": "creativeCommon",
+      "permission_reference": "",
+      "made_for_kids": false
+    }
+  ]
+}

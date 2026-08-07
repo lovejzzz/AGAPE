@@ -5,8 +5,16 @@ __pycache__/
 *.pyc
 .DS_Store
 models/*.task
+models/*.pt
 !models/.gitkeep
 runs/*
 !runs/.gitkeep
 samples/*
 !samples/.gitkeep
+training_data/*
+!training_data/.gitkeep
+training_runs/*
+!training_runs/.gitkeep
+training/*-review.json
+training/*-split-plan.json
+training/*-experiment-plan.json

@@ -2,7 +2,7 @@
 
 AGAPE—the **Audiovisual Gesture And Prosody Engine**—is an offline-first engine developed by Second Take Lab. It analyzes vocal delivery and visible movement on one shared media clock. It deliberately does **not** transcribe speech and does not infer personality, emotion, honesty, diagnosis, or protected traits.
 
-> Research status: AGAPE v0.2 is a synchronized feature, comparison, and self-supervised calibration engine. A custom learned AGAPE neural model and its training loop are not implemented yet; AGAPE Lab is the mechanism for generating controlled calibration data toward that model.
+> Research status: AGAPE v0.2 is a synchronized feature, comparison, and self-supervised calibration engine. The repository includes a local temporal synchrony model and a promotion-gated training loop. One local checkpoint has cleared the current one-time held-out synchrony gates, but checkpoints and training data are not distributed with the repository, and the default coaching engine remains the interpretable ruleset.
 
 ## Set up another computer
 
@@ -52,6 +52,37 @@ AGAPE Lab creates known visual delays, checks repeatability and directional sens
 .venv/bin/agape lab /path/to/video.mp4 --segment-seconds 30 \
   --delays 0.25,0.50,0.75 --context camera
 ```
+
+## Local neural training (no AI API or token usage)
+
+The learned model trains entirely on this computer with PyTorch. It uses only AGAPE's numeric, transcript-free timelines. Known time shifts provide self-supervised labels; no LLM labels, API keys, cloud training, or raw media are required during model fitting.
+
+```bash
+./scripts/bootstrap-training.sh
+.venv/bin/agape train-demo
+```
+
+The demo proves the MPS/CPU training machinery but is deliberately rejected for promotion because its features are generated. For a real run, first analyze at least eight independent recordings, then point the one-command pipeline at their completed run directories:
+
+```bash
+.venv/bin/agape train-local /absolute/path/to/curated-runs --epochs 60
+```
+
+Use `--group-map /path/groups.json` when multiple recordings contain the same speaker or session. For a preregistered final evaluation, also use `--split-plan /path/splits.json` to assign every group label explicitly to `train`, `val`, or `test`. See [`training/README.md`](training/README.md) for the dataset contract, supervision boundary, commands, artifacts, and promotion gates.
+
+### YouTube training sources
+
+AGAPE can build the same local dataset from reviewed YouTube segments. It supports Creative Commons discovery through the YouTube Data API or a no-key metadata-only fallback, resumable ingestion, current-license verification, quality filtering, attribution records, automatic media deletion, local MPS training, and held-out judgment.
+
+```bash
+.venv/bin/agape youtube-discover "public speaking keynote" \
+  --output training_data/youtube-manifest.json
+
+# Review the manifest and confirm its reuse attestation first.
+.venv/bin/agape youtube-train training_data/youtube-manifest.json --epochs 60
+```
+
+See [`training/YOUTUBE.md`](training/YOUTUBE.md) for the manifest and reuse boundary.
 
 ## Storage model
 

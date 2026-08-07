@@ -355,6 +355,192 @@ def build_parser() -> argparse.ArgumentParser:
     lab.add_argument("--delays", default="0.25,0.50,0.75")
     add_analysis_options(lab)
     lab.set_defaults(func=lab_command, segment_seconds=30)
+
+    from .training.commands import (
+        demo_command,
+        judge_command,
+        score_command,
+        train_command,
+        training_data_command,
+        local_pipeline_command,
+        youtube_discover_command,
+        youtube_ingest_command,
+        youtube_train_command,
+    )
+
+    training_data = subparsers.add_parser(
+        "training-data",
+        help="Build a leakage-safe local dataset from AGAPE features.json files",
+    )
+    training_data.add_argument("inputs", nargs="+", help="Feature files or directories containing them")
+    training_data.add_argument("--output")
+    training_data.add_argument("--window-seconds", type=float, default=8.0)
+    training_data.add_argument("--stride-seconds", type=float, default=2.0)
+    training_data.add_argument("--offsets", default="-2,-1,-0.5,0.5,1,2")
+    training_data.add_argument(
+        "--minimum-alignment-gain", type=float, default=0.10,
+        help="Keep paired negatives only when shifting weakens correlation evidence by this amount",
+    )
+    training_data.add_argument(
+        "--group-map",
+        action="append",
+        help="JSON object mapping feature-file paths to speaker/session group labels; repeat to merge maps",
+    )
+    training_data.add_argument(
+        "--group-map-only",
+        action="store_true",
+        help="Include only feature files named by the supplied group maps",
+    )
+    training_data.add_argument(
+        "--split-plan",
+        help="JSON object assigning every speaker/session group label to train, val, or test",
+    )
+    training_data.add_argument("--seed", type=int, default=17)
+    training_data.set_defaults(func=training_data_command)
+
+    train = subparsers.add_parser(
+        "train", help="Train the local temporal synchrony model without API calls"
+    )
+    train.add_argument("dataset")
+    train.add_argument("--output-root")
+    train.add_argument("--epochs", type=int, default=60)
+    train.add_argument("--batch-size", type=int, default=64)
+    train.add_argument("--learning-rate", type=float, default=2e-3)
+    train.add_argument("--weight-decay", type=float, default=1e-4)
+    train.add_argument("--hidden-size", type=int, default=48)
+    train.add_argument("--blocks", type=int, default=3)
+    train.add_argument("--dropout", type=float, default=0.12)
+    train.add_argument("--patience", type=int, default=10)
+    train.add_argument("--pairwise-weight", type=float, default=0.5)
+    train.add_argument("--pairwise-margin", type=float, default=1.0)
+    train.add_argument("--no-group-balancing", action="store_true")
+    train.add_argument("--no-explicit-correlations", action="store_true")
+    train.add_argument("--seed", type=int, default=17)
+    train.add_argument("--device", choices=("auto", "mps", "cuda", "cpu"), default="auto")
+    train.set_defaults(func=train_command)
+
+    judge = subparsers.add_parser(
+        "judge", help="Evaluate a checkpoint on the untouched test split and apply promotion gates"
+    )
+    judge.add_argument("checkpoint")
+    judge.add_argument("dataset")
+    judge.add_argument("--output")
+    judge.add_argument("--device", choices=("auto", "mps", "cuda", "cpu"), default="auto")
+    judge.add_argument("--require-pass", action="store_true")
+    judge.set_defaults(func=judge_command)
+
+    score = subparsers.add_parser(
+        "learned-score", help="Score one completed AGAPE feature timeline with a judged checkpoint"
+    )
+    score.add_argument("checkpoint")
+    score.add_argument("features")
+    score.add_argument("--output")
+    score.add_argument("--device", choices=("auto", "mps", "cuda", "cpu"), default="auto")
+    score.add_argument(
+        "--allow-experimental",
+        action="store_true",
+        help="Allow inference with an unjudged or rejected checkpoint for research only",
+    )
+    score.set_defaults(func=score_command)
+
+    demo = subparsers.add_parser(
+        "train-demo", help="Run a generated-data smoke test of the complete local training path"
+    )
+    demo.add_argument("--epochs", type=int, default=18)
+    demo.add_argument("--seed", type=int, default=17)
+    demo.add_argument("--device", choices=("auto", "mps", "cuda", "cpu"), default="auto")
+    demo.set_defaults(func=demo_command)
+
+    local = subparsers.add_parser(
+        "train-local",
+        help="Build data, train on local compute, and judge the checkpoint in one command",
+    )
+    local.add_argument("inputs", nargs="+", help="Feature files or directories containing them")
+    local.add_argument("--dataset")
+    local.add_argument("--output-root")
+    local.add_argument("--group-map", action="append")
+    local.add_argument("--group-map-only", action="store_true")
+    local.add_argument("--split-plan")
+    local.add_argument("--window-seconds", type=float, default=8.0)
+    local.add_argument("--stride-seconds", type=float, default=2.0)
+    local.add_argument("--offsets", default="-2,-1,-0.5,0.5,1,2")
+    local.add_argument("--minimum-alignment-gain", type=float, default=0.10)
+    local.add_argument("--epochs", type=int, default=60)
+    local.add_argument("--batch-size", type=int, default=64)
+    local.add_argument("--learning-rate", type=float, default=2e-3)
+    local.add_argument("--hidden-size", type=int, default=48)
+    local.add_argument("--blocks", type=int, default=3)
+    local.add_argument("--patience", type=int, default=10)
+    local.add_argument("--pairwise-weight", type=float, default=0.5)
+    local.add_argument("--pairwise-margin", type=float, default=1.0)
+    local.add_argument("--no-group-balancing", action="store_true")
+    local.add_argument("--no-explicit-correlations", action="store_true")
+    local.add_argument("--seed", type=int, default=17)
+    local.add_argument("--device", choices=("auto", "mps", "cuda", "cpu"), default="auto")
+    local.add_argument("--require-pass", action="store_true")
+    local.set_defaults(func=local_pipeline_command)
+
+    youtube_discover = subparsers.add_parser(
+        "youtube-discover",
+        help="Find Creative Commons YouTube candidates using the API or no-key metadata search",
+    )
+    youtube_discover.add_argument("query")
+    youtube_discover.add_argument("--output")
+    youtube_discover.add_argument("--backend", choices=("auto", "api", "yt-dlp"), default="auto")
+    youtube_discover.add_argument("--api-key-env", default="AGAPE_YOUTUBE_API_KEY")
+    youtube_discover.add_argument("--max-results", type=int, default=25)
+    youtube_discover.add_argument("--max-per-channel", type=int, default=3)
+    youtube_discover.add_argument("--metadata-workers", type=int, default=4)
+    youtube_discover.add_argument("--segment-start-seconds", type=int, default=15)
+    youtube_discover.add_argument("--segment-seconds", type=int, default=90)
+    youtube_discover.add_argument("--region-code")
+    youtube_discover.add_argument("--relevance-language")
+    youtube_discover.set_defaults(func=youtube_discover_command)
+
+    def add_youtube_quality_options(command: argparse.ArgumentParser) -> None:
+        command.add_argument("--minimum-visual-coverage", type=float, default=0.60)
+        command.add_argument("--minimum-stage-face-coverage", type=float, default=0.25)
+        command.add_argument("--minimum-speech-ratio", type=float, default=0.30)
+        command.add_argument("--minimum-emphasis-events", type=int, default=3)
+        command.add_argument("--fail-fast", action="store_true")
+
+    youtube_ingest = subparsers.add_parser(
+        "youtube-ingest",
+        help="Analyze an attested YouTube manifest, delete media, and retain accepted features",
+    )
+    youtube_ingest.add_argument("manifest")
+    youtube_ingest.add_argument("--output-root")
+    add_youtube_quality_options(youtube_ingest)
+    youtube_ingest.set_defaults(func=youtube_ingest_command)
+
+    youtube_train = subparsers.add_parser(
+        "youtube-train",
+        help="Ingest an attested YouTube manifest, train locally, and judge the checkpoint",
+    )
+    youtube_train.add_argument("manifest")
+    youtube_train.add_argument("--ingest-root")
+    youtube_train.add_argument("--dataset")
+    youtube_train.add_argument("--output-root")
+    youtube_train.add_argument("--split-plan")
+    youtube_train.add_argument("--window-seconds", type=float, default=8.0)
+    youtube_train.add_argument("--stride-seconds", type=float, default=2.0)
+    youtube_train.add_argument("--offsets", default="-2,-1,-0.5,0.5,1,2")
+    youtube_train.add_argument("--minimum-alignment-gain", type=float, default=0.10)
+    youtube_train.add_argument("--epochs", type=int, default=60)
+    youtube_train.add_argument("--batch-size", type=int, default=64)
+    youtube_train.add_argument("--learning-rate", type=float, default=2e-3)
+    youtube_train.add_argument("--hidden-size", type=int, default=48)
+    youtube_train.add_argument("--blocks", type=int, default=3)
+    youtube_train.add_argument("--patience", type=int, default=10)
+    youtube_train.add_argument("--pairwise-weight", type=float, default=0.5)
+    youtube_train.add_argument("--pairwise-margin", type=float, default=1.0)
+    youtube_train.add_argument("--no-group-balancing", action="store_true")
+    youtube_train.add_argument("--no-explicit-correlations", action="store_true")
+    youtube_train.add_argument("--seed", type=int, default=17)
+    youtube_train.add_argument("--device", choices=("auto", "mps", "cuda", "cpu"), default="auto")
+    youtube_train.add_argument("--require-pass", action="store_true")
+    add_youtube_quality_options(youtube_train)
+    youtube_train.set_defaults(func=youtube_train_command)
     return parser
 
 
