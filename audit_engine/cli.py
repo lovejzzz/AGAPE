@@ -417,6 +417,7 @@ def build_parser() -> argparse.ArgumentParser:
     train.add_argument("--no-explicit-correlations", action="store_true")
     train.add_argument("--seed", type=int, default=17)
     train.add_argument("--device", choices=("auto", "mps", "cuda", "cpu"), default="auto")
+    train.add_argument("--resume-from", help="Warm-start training from a previous AGAPE checkpoint .pt file")
     train.set_defaults(func=train_command)
 
     judge = subparsers.add_parser(
@@ -477,6 +478,7 @@ def build_parser() -> argparse.ArgumentParser:
     local.add_argument("--no-explicit-correlations", action="store_true")
     local.add_argument("--seed", type=int, default=17)
     local.add_argument("--device", choices=("auto", "mps", "cuda", "cpu"), default="auto")
+    local.add_argument("--resume-from", help="Warm-start training from a previous AGAPE checkpoint .pt file")
     local.add_argument("--require-pass", action="store_true")
     local.set_defaults(func=local_pipeline_command)
 
@@ -538,6 +540,7 @@ def build_parser() -> argparse.ArgumentParser:
     youtube_train.add_argument("--no-explicit-correlations", action="store_true")
     youtube_train.add_argument("--seed", type=int, default=17)
     youtube_train.add_argument("--device", choices=("auto", "mps", "cuda", "cpu"), default="auto")
+    youtube_train.add_argument("--resume-from", help="Warm-start training from a previous AGAPE checkpoint .pt file")
     youtube_train.add_argument("--require-pass", action="store_true")
     add_youtube_quality_options(youtube_train)
     youtube_train.set_defaults(func=youtube_train_command)

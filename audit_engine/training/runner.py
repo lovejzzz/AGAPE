@@ -4,6 +4,7 @@ import json
 import math
 import os
 import random
+from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -179,6 +180,7 @@ def train_model(
     explicit_correlations: bool = True,
     seed: int = 17,
     requested_device: str = "auto",
+    resume_from: str | Path | None = None,
 ) -> dict:
     if epochs < 1 or batch_size < 2 or patience < 1:
         raise ValueError("epochs, batch size, and patience must be positive")
@@ -222,6 +224,16 @@ def train_model(
         explicit_correlations=explicit_correlations,
     )
     model = TemporalSynchronyNet(model_config).to(device)
+    if resume_from is not None:
+        previous_model, previous = load_checkpoint(Path(resume_from), device)
+        previous_config = previous.get("model_config", {})
+        if previous_config != asdict(model_config):
+            raise ValueError(
+                f"resume checkpoint model config {previous_config} does not match "
+                f"new dataset config {asdict(model_config)}"
+            )
+        model.load_state_dict(previous_model.state_dict())
+        model.train()
     positives = int(np.sum(y[train_mask] == 1))
     negatives = int(np.sum(y[train_mask] == 0))
     pos_weight = torch.tensor([negatives / max(positives, 1)], device=device)
@@ -259,6 +271,7 @@ def train_model(
         "threshold_calibration": "maximize macro balanced accuracy across validation groups",
         "seed": seed,
         "device": str(device),
+        "resume_from": str(resume_from) if resume_from else None,
         "checkpoint_selection": (
             "Prefer epochs that clear validation balanced-accuracy, AUROC, and score-separation gates; "
             "then maximize validation AUROC."

@@ -81,6 +81,7 @@ def train_command(args) -> int:
         explicit_correlations=not args.no_explicit_correlations,
         seed=args.seed,
         requested_device=args.device,
+        resume_from=args.resume_from,
     )
     print(json.dumps(result, indent=2))
     return 0
@@ -160,6 +161,7 @@ def local_pipeline_command(args) -> int:
         explicit_correlations=not args.no_explicit_correlations,
         seed=args.seed,
         requested_device=args.device,
+        resume_from=args.resume_from,
     )
     judgment = judge_checkpoint(
         Path(training["best_checkpoint"]),
@@ -272,6 +274,7 @@ def youtube_train_command(args) -> int:
         explicit_correlations=not args.no_explicit_correlations,
         seed=args.seed,
         requested_device=args.device,
+        resume_from=args.resume_from,
     )
     judgment = judge_checkpoint(
         Path(training["best_checkpoint"]),
